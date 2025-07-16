@@ -3,6 +3,18 @@ const ctx = canvas.getContext("2d");
 
 canvas.width = Math.min(window.innerWidth * 0.9, 1000);
 canvas.height = Math.min(window.innerHeight * 0.8, 600);
+canvas.addEventListener("touchmove", function (e) {
+  const rect = canvas.getBoundingClientRect(); // Get canvas position on screen
+  const touch = e.touches[0];
+  const x = touch.clientX - rect.left;
+
+  // Optional: constrain the basket within canvas width
+  basket.x = Math.min(Math.max(0, x - basket.width / 2), canvas.width - basket.width);
+
+  e.preventDefault(); // Prevent screen from scrolling
+});
+
+
 
 // Load images
 const appleImg = new Image();
@@ -15,7 +27,7 @@ let score = 0;
 
 const basket = {
   x: canvas.width / 2 - 40,
-  y: canvas.height - 70, // moved up a bit so it's fully visible
+  y: canvas.height - 45, // moved up a bit so it's fully visible
   width: 80,
   height: 40,
   speed: 10
