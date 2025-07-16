@@ -1,7 +1,10 @@
 const canvas = document.getElementById("game-canvas");
 const ctx = canvas.getContext("2d");
 
-// Load Images
+canvas.width = Math.min(window.innerWidth * 0.9, 1000);
+canvas.height = Math.min(window.innerHeight * 0.8, 600);
+
+// Load images
 const appleImg = new Image();
 appleImg.src = "apple-removebg-preview.png";
 
@@ -10,77 +13,81 @@ basketImg.src = "basket-removebg-preview.png";
 
 let score = 0;
 
-// Basket and Apple Objects
-let basket = {
-  x: 160,
-  y: 450,
+const basket = {
+  x: canvas.width / 2 - 40,
+  y: canvas.height - 70, // moved up a bit so it's fully visible
   width: 80,
-  height: 60,
+  height: 40,
   speed: 10
 };
 
-let apple = {
-  x: Math.random() * (canvas.width - 40),
+const apple = {
+  x: Math.random() * (canvas.width - 30),
   y: 0,
-  width: 40,
-  height: 40,
   speed: 2
 };
 
-// Start Drawing When Images Are Loaded
-appleImg.onload = () => {
-  basketImg.onload = () => {
-    draw();
-  };
-};
+let leftPressed = false;
+let rightPressed = false;
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft") leftPressed = true;
+  if (e.key === "ArrowRight") rightPressed = true;
+});
+document.addEventListener("keyup", (e) => {
+  if (e.key === "ArrowLeft") leftPressed = false;
+  if (e.key === "ArrowRight") rightPressed = false;
+});
 
 function drawBasket() {
   ctx.drawImage(basketImg, basket.x, basket.y, basket.width, basket.height);
 }
 
 function drawApple() {
-  ctx.drawImage(appleImg, apple.x, apple.y, apple.width, apple.height);
+  ctx.drawImage(appleImg, apple.x, apple.y, 30, 30);
 }
 
-function moveApple() {
+function update() {
+  if (leftPressed && basket.x > 0) basket.x -= basket.speed;
+  if (rightPressed && basket.x + basket.width < canvas.width) basket.x += basket.speed;
+
   apple.y += apple.speed;
+
+  // Collision
+  if (
+    apple.y + 30 >= basket.y &&
+    apple.x + 15 > basket.x &&
+    apple.x < basket.x + basket.width
+  ) {
+    score++;
+    document.getElementById("scoredisplay").innerText = "Score : " + score;
+    resetApple();
+  }
+
+  // Missed
   if (apple.y > canvas.height) {
-    resetApple(); // Optional: If you want to end game on miss, do that here
+    showGameOver();
   }
 }
 
 function resetApple() {
-  apple.x = Math.random() * (canvas.width - apple.width);
+  apple.x = Math.random() * (canvas.width - 30);
   apple.y = 0;
 }
 
-function checkCollision() {
-  if (
-    apple.y + apple.height >= basket.y &&
-    apple.y + apple.height <= basket.y + 10 &&
-    apple.x + apple.width >= basket.x &&
-    apple.x <= basket.x + basket.width
-  ) {
-    score++;
-    document.getElementById("scoredisplay").textContent = "Score: " + score;
-    resetApple();
-  }
+function showGameOver() {
+  cancelAnimationFrame(animationId);
+  const gameOverBox = document.getElementById("gameOverMessage");
+  gameOverBox.innerText = "Game Over! Final Score: " + score;
+  gameOverBox.style.display = "block";
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBasket();
   drawApple();
-  moveApple();
-  checkCollision();
-  requestAnimationFrame(draw);
+  drawBasket();
+  update();
+  animationId = requestAnimationFrame(draw);
 }
 
-// Move Basket with Arrow Keys
-document.addEventListener("keydown", function (e) {
-  if (e.key === "ArrowLeft" && basket.x > 0) {
-    basket.x -= basket.speed;
-  } else if (e.key === "ArrowRight" && basket.x + basket.width < canvas.width) {
-    basket.x += basket.speed;
-  }
-});
+let animationId = requestAnimationFrame(draw);
